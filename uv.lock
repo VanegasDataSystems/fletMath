@@ -284,6 +284,18 @@ all = [
 ]
 
 [[package]]
+name = "flet-audio"
+version = "1.0.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "flet" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/65/fd/4f7b8dda12fb88ffe0560bc2f126596e8ffd612a4491d60225b3d0d55737/flet_audio-1.0.3.tar.gz", hash = "sha256:2b7fcf46f13f8b810aca7e5cfe1a3b404d407324b97c75826056345aafbf8f50", size = 11721, upload-time = "2026-09-30T02:13:53.481Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c0/3a/db7a85f52166c123284f31c357f19e1a5238c504da3e68f3c0a3a192deb8/flet_audio-1.0.3-py3-none-any.whl", hash = "sha256:0343a87aa823b125eb85569722f432887dc7e74bda35c5bfd00fa9a72f6ef741", size = 13495, upload-time = "2026-09-30T02:13:52.625Z" },
+]
+
+[[package]]
 name = "flet-cli"
 version = "1.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -348,6 +360,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "flet" },
+    { name = "flet-audio" },
 ]
 
 [package.dev-dependencies]
@@ -356,7 +369,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "flet", specifier = "==1.0.3" }]
+requires-dist = [
+    { name = "flet", specifier = "==1.0.3" },
+    { name = "flet-audio", specifier = "==1.0.3" },
+]
 
 [package.metadata.requires-dev]
 dev = [{ name = "flet", extras = ["all"], specifier = "==1.0.3" }]

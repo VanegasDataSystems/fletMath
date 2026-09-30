@@ -28,9 +28,8 @@ jobs:
         run: echo "BUILD = \"${GITHUB_SHA::7} $(date -u +%m-%d\ %H:%M)Z\"" > src/build_info.py
       - name: Publish static web app
         run: >
-          uv run flet publish src/main.py
+          uv run flet publish .
           --distpath "$GITHUB_WORKSPACE/dist"
-          --assets src/assets
           --base-url ${{ github.event.repository.name }}
           --route-url-strategy hash
           --app-name fletMath --app-short-name fletMath

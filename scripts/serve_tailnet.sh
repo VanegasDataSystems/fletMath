@@ -6,8 +6,9 @@ cd "$(dirname "$0")/.."
 PORT="${PORT:-8550}"
 
 uv sync
-uv run flet publish src/main.py \
-  --distpath "$PWD/dist" --assets src/assets \
+# publish from the project root so pyproject deps (flet-audio) and src/assets are picked up
+uv run flet publish . \
+  --distpath "$PWD/dist" \
   --route-url-strategy hash \
   --app-name fletMath --app-short-name fletMath \
   --app-description "Timed addition game" \

@@ -9,6 +9,7 @@ import random
 import time
 
 import flet as ft
+import flet_audio as fta
 
 try:
     from build_info import BUILD  # written by the Pages workflow
@@ -47,10 +48,56 @@ class Prefs:
             pass
 
 
+# Tux Paint sounds (GPL-2.0 and per-file CC licenses, see assets/sounds/TUXPAINT_*.txt),
+# stored as assets/sounds/<event>_<name>.wav; one is picked at random per event.
+SOUNDS = {
+    "start": ["grow", "zoom_up", "flower_click"],
+    "slide": ["flip", "bubble", "light1", "stamp", "fold", "ripples", "snowball", "paint4"],
+    "tick": ["click"],
+    "correct": ["giggle", "tuxok", "cartoon", "googlyeyes", "toothpaste", "realrainbow",
+                "polyfill_place", "string", "alien"],
+    "wrong": ["youcannot", "doublevision", "distortion", "polyfill_remove", "italic_off"],
+    "timeout": ["areyousure", "drip", "tv", "rain", "crescent"],
+    "finish": ["harp", "polyfill_finish", "comic_dots", "bloom"],
+    "back": ["shrink", "zoom_down", "return"],
+}
+
+
+class Sfx:
+    """Random pick per event, never the same clip twice in a row; audio errors never stop the game."""
+
+    def __init__(self, page: ft.Page):
+        self.page = page
+        self.on = True
+        self.last: dict[str, str] = {}
+        self.players: dict[str, dict[str, fta.Audio]] = {}
+        for event, names in SOUNDS.items():
+            self.players[event] = {}
+            for n in names:
+                a = fta.Audio(src=f"sounds/{event}_{n}.wav", release_mode=fta.ReleaseMode.STOP)
+                self.players[event][n] = a
+                page.services.append(a)
+
+    def play(self, event):
+        if not self.on:
+            return
+        names = SOUNDS[event]
+        pick = random.choice([n for n in names if n != self.last.get(event)] or names)
+        self.last[event] = pick
+        self.page.run_task(self._play, self.players[event][pick])
+
+    async def _play(self, audio):
+        try:
+            await audio.play()
+        except Exception:
+            pass
+
+
 class Game:
     def __init__(self, page: ft.Page):
         self.page = page
         self.prefs = Prefs()
+        self.sfx = Sfx(page)
         self.lo, self.hi, self.secs, self.count = (DEFAULTS[k] for k in ("lo", "hi", "secs", "count"))
         self.best = 0
         self.round_id = 0
@@ -96,6 +143,7 @@ class Game:
             min=5, max=50, divisions=9, value=self.count,
             on_change=self._on_setup_change,
         )
+        self.sound_sw = ft.Switch(label="Sounds", value=True, on_change=self._on_sound)
         self.best_label = ft.Text(size=14, color=ft.Colors.ON_SURFACE_VARIANT)
         self.setup_view = ft.Column(
             expand=True,
@@ -119,6 +167,7 @@ class Game:
                     height=56, width=220,
                     on_click=self._start,
                 ),
+                self.sound_sw,
                 self.best_label,
                 ft.Text(f"build {BUILD}", size=11, color=ft.Colors.OUTLINE),
             ],
@@ -131,6 +180,11 @@ class Game:
         self.secs_label.value = f"{int(self.secs_slider.value)} seconds per problem"
         self.count_label.value = f"{int(self.count_slider.value)} problems"
         self.best_label.value = f"Best streak: {self.best}" if self.best else ""
+
+    async def _on_sound(self, e):
+        self.sfx.on = self.sound_sw.value
+        await self.prefs.set_int("sound", int(self.sfx.on))
+        self.sfx.play("correct")
 
     def _on_setup_change(self, e):
         self._refresh_setup_labels()
@@ -276,6 +330,7 @@ class Game:
         self.secs = await self.prefs.get_int("secs", DEFAULTS["secs"])
         self.count = await self.prefs.get_int("count", DEFAULTS["count"])
         self.best = await self.prefs.get_int("best", 0)
+        self.sfx.on = self.sound_sw.value = bool(await self.prefs.get_int("sound", 1))
         self.range_slider.start_value, self.range_slider.end_value = self.lo, self.hi
         self.secs_slider.value = self.secs
         self.count_slider.value = self.count
@@ -288,6 +343,7 @@ class Game:
         self.page.update()
 
     async def _start(self, e):
+        self.sfx.play("start")  # first thing, while iOS still counts the tap
         self.lo, self.hi = int(self.range_slider.start_value), int(self.range_slider.end_value)
         self.secs = int(self.secs_slider.value)
         self.count = int(self.count_slider.value)
@@ -306,12 +362,14 @@ class Game:
     async def _stop(self, e):
         self.round_id += 1  # cancels any running countdown
         self.accepting = False
+        self.sfx.play("back")
         self._refresh_setup_labels()
         self.show(self.setup_view)
 
     async def _done(self, e):
         self.round_id += 1  # the unfinished problem is not counted
         self.accepting = False
+        self.sfx.play("finish")
         self.show(self._build_summary())
 
     def _build_summary(self):
@@ -412,18 +470,23 @@ class Game:
             box.opacity = 1
         self.plus_box.scale = 1
         self.page.update()
+        self.sfx.play("slide")
         await asyncio.sleep(0.5)
         if rid != self.round_id:
             return
 
-        # countdown
+        # countdown; tick at 3, 2, 1 seconds left
         self.accepting = True
         self.t0 = time.monotonic()
+        tick_at = min(3, self.secs - 1)
         while rid == self.round_id and self.accepting:
             left = self.secs - (time.monotonic() - self.t0)
             if left <= 0:
                 await self._timeout(rid)
                 return
+            if 0 < tick_at and left <= tick_at:
+                self.sfx.play("tick")
+                tick_at -= 1
             frac = left / self.secs
             self.ring.value = frac
             self.ring.color = (ft.Colors.GREEN if frac > 0.5
@@ -441,6 +504,7 @@ class Game:
         self.ring.value = 0
         self.ring_t.value = "0"
         self.feedback.value = "Time!"
+        self.sfx.play("timeout")
         self.eq_t.value = f"= {self.answer}"
         self.eq_t.color = ft.Colors.AMBER
         c = self.cells[self.answer]
@@ -471,6 +535,7 @@ class Game:
             c.bgcolor = ft.Colors.GREEN
             c.content.color = ft.Colors.WHITE
             c.scale = 1.3
+            self.sfx.play("correct")
             self.eq_t.value = f"= {self.answer}"
             self.eq_t.color = ft.Colors.GREEN
             avg = sum(self.times) / len(self.times)
@@ -486,6 +551,7 @@ class Game:
             c.bgcolor = ft.Colors.RED
             c.content.color = ft.Colors.WHITE
             c.scale = 0.85
+            self.sfx.play("wrong")
             self.page.update()
             for dx in (0.04, -0.04, 0.03, -0.03, 0):  # shake the problem
                 self.problem.offset = ft.Offset(dx, 0)
