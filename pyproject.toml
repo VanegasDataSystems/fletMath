@@ -1,0 +1,20 @@
+[project]
+name = "fletadd"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "flet==1.0.3",
+]
+
+[dependency-groups]
+dev = [
+    "flet[all]==1.0.3",
+]
+
+[tool.flet]
+product = "fletAdd"
+company = "VanegasDataSystems"
+org = "com.vanegasdatasystems"
+
+[tool.flet.app]
+path = "src"

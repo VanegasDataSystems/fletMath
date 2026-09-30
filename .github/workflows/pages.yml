@@ -1,0 +1,41 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync
+      - name: Publish static web app
+        run: >
+          uv run flet publish src/main.py
+          --distpath "$GITHUB_WORKSPACE/dist"
+          --assets src/assets
+          --base-url ${{ github.event.repository.name }}
+          --route-url-strategy hash
+          --app-name fletAdd --app-short-name fletAdd
+          --app-description "Timed addition game"
+          --pwa-theme-color "#3F51B5" --pwa-background-color "#121212"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deployment
+        uses: actions/deploy-pages@v4
