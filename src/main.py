@@ -136,26 +136,9 @@ class Game:
     # ---------- setup screen ----------
 
     def _build_setup(self):
-        self.lo_t = ft.Text(size=22, weight=ft.FontWeight.BOLD)
-        self.hi_t = ft.Text(size=22, weight=ft.FontWeight.BOLD)
-
-        def stepper(label, value_t, end):
-            return ft.Row(spacing=0, controls=[
-                ft.Text(label, size=16, color=ft.Colors.ON_SURFACE_VARIANT),
-                ft.IconButton(ft.Icons.REMOVE_CIRCLE_OUTLINE_ROUNDED, data=(end, -1),
-                              on_click=self._on_step),
-                value_t,
-                ft.IconButton(ft.Icons.ADD_CIRCLE_OUTLINE_ROUNDED, data=(end, 1),
-                              on_click=self._on_step),
-            ])
-
-        self.range_label = ft.Row(
-            alignment=ft.MainAxisAlignment.CENTER, spacing=16, wrap=True,
-            controls=[stepper("From", self.lo_t, "lo"), stepper("to", self.hi_t, "hi")],
-        )
         self.range_slider = ft.RangeSlider(
             min=RANGE_MIN, max=RANGE_MAX, divisions=RANGE_MAX - RANGE_MIN,
-            start_value=self.lo, end_value=self.hi,
+            start_value=self.lo, end_value=self.hi, label="{value}",  # number shows while dragging
             on_change=self._on_setup_change,
         )
         self.secs_label = ft.Text(size=18, weight=ft.FontWeight.W_600)
@@ -188,7 +171,6 @@ class Game:
                 ),
                 ft.Text(APP_NAME, size=34, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER),
                 ft.Container(height=12),
-                self.range_label,
                 self.range_slider,
                 self.secs_label,
                 self.secs_slider,
@@ -210,8 +192,6 @@ class Game:
         self._refresh_setup_labels()
 
     def _refresh_setup_labels(self):
-        lo, hi = int(self.range_slider.start_value), int(self.range_slider.end_value)
-        self.lo_t.value, self.hi_t.value = str(lo), str(hi)
         self.secs_label.value = f"{int(self.secs_slider.value)} seconds per problem"
         self.count_label.value = f"{int(self.count_slider.value)} problems"
         self.best_label.value = f"Best streak: {self.best}" if self.best else ""
@@ -236,19 +216,6 @@ class Game:
 
     def _on_setup_change(self, e):
         self._refresh_setup_labels()
-
-    def _on_step(self, e):
-        """-/+ buttons: nudge one end of the range, keeping lo <= hi inside the slider."""
-        end, delta = e.control.data
-        s = self.range_slider
-        lo, hi = int(s.start_value), int(s.end_value)
-        if end == "lo":
-            lo = min(max(lo + delta, RANGE_MIN), hi)
-        else:
-            hi = max(min(hi + delta, RANGE_MAX), lo)
-        s.start_value, s.end_value = lo, hi
-        self._refresh_setup_labels()
-        self.page.update()
 
     # ---------- play screen ----------
 
