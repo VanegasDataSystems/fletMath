@@ -23,7 +23,7 @@ TICK = 0.05  # countdown refresh, seconds
 GAP = 8  # grid spacing, px
 
 APP_NAME = "Mathy McMathFace"
-DEFAULTS = {"lo": 0, "hi": 4, "secs": 10, "count": 4, "theme": 3}
+DEFAULTS = {"lo": 0, "hi": 4, "secs": 10, "count": 5, "theme": 3}
 THEMES = [ft.Colors.ORANGE, ft.Colors.RED, ft.Colors.GREEN, ft.Colors.BLUE]  # pref "theme" = index
 RANGE_MIN, RANGE_MAX = 0, 20
 
