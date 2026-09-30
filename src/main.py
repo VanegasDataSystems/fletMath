@@ -15,7 +15,7 @@ POP = ft.Animation(250, ft.AnimationCurve.EASE_OUT_BACK)
 TICK = 0.05  # countdown refresh, seconds
 GAP = 8  # grid spacing, px
 
-DEFAULTS = {"lo": 0, "hi": 10, "secs": 10}
+DEFAULTS = {"lo": 0, "hi": 10, "secs": 10, "count": 10}
 RANGE_MIN, RANGE_MAX = 0, 20
 
 
@@ -46,7 +46,7 @@ class Game:
     def __init__(self, page: ft.Page):
         self.page = page
         self.prefs = Prefs()
-        self.lo, self.hi, self.secs = DEFAULTS["lo"], DEFAULTS["hi"], DEFAULTS["secs"]
+        self.lo, self.hi, self.secs, self.count = (DEFAULTS[k] for k in ("lo", "hi", "secs", "count"))
         self.best = 0
         self.round_id = 0
         self.accepting = False
@@ -86,20 +86,27 @@ class Game:
             min=3, max=30, divisions=27, value=self.secs,
             on_change=self._on_setup_change,
         )
+        self.count_label = ft.Text(size=18, weight=ft.FontWeight.W_600)
+        self.count_slider = ft.Slider(
+            min=5, max=50, divisions=9, value=self.count,
+            on_change=self._on_setup_change,
+        )
         self.best_label = ft.Text(size=14, color=ft.Colors.ON_SURFACE_VARIANT)
         self.setup_view = ft.Column(
             expand=True,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             alignment=ft.MainAxisAlignment.CENTER,
-            spacing=18,
+            spacing=12,
             controls=[
-                ft.Icon(ft.Icons.CALCULATE_ROUNDED, size=72, color=ft.Colors.PRIMARY),
+                ft.Icon(ft.Icons.CALCULATE_ROUNDED, size=56, color=ft.Colors.PRIMARY),
                 ft.Text("fletMath", size=40, weight=ft.FontWeight.BOLD),
                 ft.Container(height=12),
                 self.range_label,
                 self.range_slider,
                 self.secs_label,
                 self.secs_slider,
+                self.count_label,
+                self.count_slider,
                 ft.Container(height=12),
                 ft.FilledButton(
                     content=ft.Text("Start", size=22),
@@ -116,6 +123,7 @@ class Game:
         lo, hi = int(self.range_slider.start_value), int(self.range_slider.end_value)
         self.lo_t.value, self.hi_t.value = str(lo), str(hi)
         self.secs_label.value = f"{int(self.secs_slider.value)} seconds per problem"
+        self.count_label.value = f"{int(self.count_slider.value)} problems"
         self.best_label.value = f"Best streak: {self.best}" if self.best else ""
 
     def _on_setup_change(self, e):
@@ -140,10 +148,13 @@ class Game:
         self.score_t = ft.Text("0", size=18, weight=ft.FontWeight.BOLD)
         self.miss_t = ft.Text("0", size=18, weight=ft.FontWeight.BOLD)
         self.streak_t = ft.Text("0", size=18, weight=ft.FontWeight.BOLD)
+        self.progress_t = ft.Text("", size=18, weight=ft.FontWeight.BOLD,
+                                  color=ft.Colors.ON_SURFACE_VARIANT)
         top = ft.Row(
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             controls=[
                 ft.IconButton(ft.Icons.ARROW_BACK_ROUNDED, on_click=self._stop),
+                self.progress_t,
                 ft.Row(spacing=4, controls=[
                     ft.Icon(ft.Icons.CHECK_CIRCLE_ROUNDED, color=ft.Colors.GREEN), self.score_t,
                     ft.Container(width=10),
@@ -257,9 +268,11 @@ class Game:
         self.lo = await self.prefs.get_int("lo", DEFAULTS["lo"])
         self.hi = await self.prefs.get_int("hi", DEFAULTS["hi"])
         self.secs = await self.prefs.get_int("secs", DEFAULTS["secs"])
+        self.count = await self.prefs.get_int("count", DEFAULTS["count"])
         self.best = await self.prefs.get_int("best", 0)
         self.range_slider.start_value, self.range_slider.end_value = self.lo, self.hi
         self.secs_slider.value = self.secs
+        self.count_slider.value = self.count
         self._refresh_setup_labels()
         self.show(self.setup_view)
 
@@ -271,7 +284,8 @@ class Game:
     async def _start(self, e):
         self.lo, self.hi = int(self.range_slider.start_value), int(self.range_slider.end_value)
         self.secs = int(self.secs_slider.value)
-        for k in ("lo", "hi", "secs"):
+        self.count = int(self.count_slider.value)
+        for k in ("lo", "hi", "secs", "count"):
             await self.prefs.set_int(k, getattr(self, k))
         self.score = self.misses = self.streak = self.wrong = self.session_best = 0
         self.times: list[float] = []
@@ -350,6 +364,11 @@ class Game:
         self.streak_t.value = str(self.streak)
 
     async def _round(self):
+        done = self.score + self.misses
+        if done >= self.count:
+            await self._done(None)
+            return
+        self.progress_t.value = f"{done + 1}/{self.count}"
         self.round_id += 1
         rid = self.round_id
         self.accepting = False
