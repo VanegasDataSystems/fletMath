@@ -2,6 +2,7 @@
 
 uv run --no-project --with soundfile --with numpy python scripts/tuxpaint_sounds.py <tuxpaint src dir> src/assets/sounds
 (tuxpaint src: github.com/tux4kids/Tuxpaint-Android, app/src/main/jni/tuxpaint)
+"""
 
 import shutil
 import sys
@@ -34,6 +35,8 @@ POOLS = {
     "finish": [(f"{D}/harp.wav", 4), (f"{M}/polyfill_finish.ogg", 4),
                (f"{M}/comic_dots.ogg", 6), (f"{M}/bloom.ogg", 4)],
     "back": [(f"{D}/shrink.wav", 1.5), (f"{M}/zoom_down.ogg", 1.5), (f"{D}/return.wav", 1.5)],
+    # all-correct celebration: the long happy ones (superhero theme; Ride of the Valkyries)
+    "perfect": [(f"{M}/comic_dots.ogg", 9), (f"{M}/swirls_rays.ogg", 3)],
 }
 
 

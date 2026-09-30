@@ -5,6 +5,7 @@ and the player taps the sum in a grid holding every possible sum (2*lo .. 2*hi).
 """
 
 import asyncio
+import math
 import random
 import sys
 import time
@@ -64,7 +65,10 @@ SOUNDS = {
     "timeout": ["areyousure", "drip", "tv", "rain", "crescent"],
     "finish": ["harp", "polyfill_finish", "comic_dots", "bloom"],
     "back": ["shrink", "zoom_down", "return"],
+    "perfect": ["comic_dots", "swirls_rays"],  # all-correct celebration, played together
 }
+CONFETTI = [ft.Colors.RED, ft.Colors.ORANGE, ft.Colors.AMBER, ft.Colors.GREEN, ft.Colors.BLUE,
+            ft.Colors.PURPLE, ft.Colors.PINK, ft.Colors.CYAN]
 
 
 class Sfx:
@@ -104,13 +108,18 @@ class Sfx:
         names = SOUNDS[event]
         pick = random.choice([n for n in names if n != self.last.get(event)] or names)
         self.last[event] = pick
+        self.play_clip(event, pick)
+
+    def play_clip(self, event, name):
+        if not self.on:
+            return
         if self.channel is not None:
             try:
-                self.channel.postMessage(f"play:{event}_{pick}")
+                self.channel.postMessage(f"play:{event}_{name}")
             except Exception:
                 pass
             return
-        self.page.run_task(self._play, self.players[event][pick])
+        self.page.run_task(self._play, self.players[event][name])
 
     async def _play(self, audio):
         try:
@@ -405,7 +414,7 @@ class Game:
         self.sfx.play("finish")
         self.show(self._build_summary())
 
-    def _build_summary(self):
+    def _build_summary(self, perfect=False):
         total = self.score + self.misses
         avg = f"{sum(self.times) / len(self.times):.1f}s" if self.times else "-"
         fast = f"{min(self.times):.1f}s" if self.times else "-"
@@ -440,10 +449,11 @@ class Game:
             controls=[
                 ft.Container(height=8),
                 ft.Icon(ft.Icons.EMOJI_EVENTS_ROUNDED, size=64, color=ft.Colors.AMBER),
-                ft.Text("All done!", size=36, weight=ft.FontWeight.BOLD),
+                ft.Text("PERFECT!" if perfect else "All done!", size=36, weight=ft.FontWeight.BOLD),
                 tiles,
                 ft.Text("Practice: " + ",  ".join(practice), size=16,
                         text_align=ft.TextAlign.CENTER) if practice else ft.Container(),
+                *(self._challenge_controls() if perfect else []),
                 ft.Container(height=8),
                 ft.FilledButton(
                     content=ft.Text("Play again", size=20),
@@ -455,6 +465,103 @@ class Game:
             ],
         )
 
+    def _challenge_controls(self):
+        """After a perfect round: dare them one number higher."""
+        x = self.hi + 1
+        if x > RANGE_MAX:
+            return [ft.Text("You beat the biggest numbers!", size=22, weight=ft.FontWeight.BOLD,
+                            text_align=ft.TextAlign.CENTER)]
+        return [
+            ft.Text(f"Nobody could do {x} numbers, could they?", size=24, weight=ft.FontWeight.BOLD,
+                    text_align=ft.TextAlign.CENTER, color=ft.Colors.PRIMARY),
+            ft.FilledButton(
+                content=ft.Text("I can!", size=24), icon=ft.Icons.ROCKET_LAUNCH_ROUNDED,
+                height=64, width=240, on_click=self._challenge,
+            ),
+        ]
+
+    async def _challenge(self, e):
+        self.range_slider.end_value = min(self.hi + 1, RANGE_MAX)
+        await self._start(e)  # saves the new range with the other settings
+
+    async def _celebrate(self):
+        """Every problem right: confetti burst from the middle, a star pops in, the happy sounds stack up."""
+        w, h = self.page.width or 400, self.page.height or 700
+        cx, cy = w / 2, h / 2
+        pieces = [
+            ft.Container(
+                width=random.choice([8, 10, 12]), height=random.choice([12, 16, 20]), border_radius=3,
+                bgcolor=random.choice(CONFETTI), left=cx, top=cy, rotate=0,
+                animate_position=ft.Animation(random.randint(700, 1100), ft.AnimationCurve.EASE_OUT),
+                animate_rotation=ft.Animation(2600, ft.AnimationCurve.LINEAR),
+            )
+            for _ in range(70)
+        ]
+        star = ft.Container(
+            content=ft.Column(
+                tight=True, spacing=0, horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                controls=[
+                    ft.Icon(ft.Icons.STAR_ROUNDED, size=160, color=ft.Colors.AMBER),
+                    ft.Text("PERFECT!", size=52, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                    ft.Text(f"{self.count} out of {self.count}!", size=26, color=ft.Colors.WHITE),
+                ],
+            ),
+            scale=0, rotate=-0.6,
+            animate_scale=ft.Animation(900, ft.AnimationCurve.ELASTIC_OUT),
+            animate_rotation=ft.Animation(900, ft.AnimationCurve.EASE_OUT_BACK),
+        )
+        shade = ft.Container(left=0, top=0, width=w, height=h, opacity=0, animate_opacity=400,
+                             bgcolor=ft.Colors.with_opacity(0.55, ft.Colors.BLACK))
+        layer = ft.Stack(width=w, height=h, controls=[
+            shade, *pieces,
+            ft.Container(left=0, top=0, width=w, height=h, alignment=ft.Alignment.CENTER, content=star),
+        ])
+        self.page.overlay.append(layer)
+        self.page.update()
+        await asyncio.sleep(0.05)
+        self.page.run_task(self._celebration_sounds)
+
+        # burst outward
+        shade.opacity = 1
+        for p in pieces:
+            angle, dist = random.uniform(0, 2 * math.pi), random.uniform(0.2, 0.65) * max(w, h)
+            p.left = cx + math.cos(angle) * dist
+            p.top = cy + math.sin(angle) * dist * 0.8 - h * 0.12
+            p.rotate = random.uniform(-14, 14)
+        star.scale, star.rotate = 1, 0
+        self.page.update()
+        await asyncio.sleep(1.1)
+
+        # confetti rains down while the star beats
+        for p in pieces:
+            p.animate_position = ft.Animation(random.randint(1600, 2600), ft.AnimationCurve.EASE_IN)
+            p.left += random.uniform(-70, 70)
+            p.top = h + 60
+            p.rotate += random.uniform(-12, 12)
+        self.page.update()
+        star.animate_scale = ft.Animation(300, ft.AnimationCurve.EASE_OUT)
+        for s in (1.18, 1, 1.18, 1, 1.25, 1):
+            await asyncio.sleep(0.32)
+            star.scale = s
+            self.page.update()
+        await asyncio.sleep(0.8)
+        shade.opacity = 0
+        star.scale = 0
+        self.page.update()
+        await asyncio.sleep(0.4)
+        self.page.overlay.remove(layer)
+        self.page.update()
+
+    async def _celebration_sounds(self):
+        """Superhero theme and Valkyries underneath; the short happy ones on top."""
+        sfx = self.sfx
+        sfx.play_clip("perfect", "comic_dots")
+        for delay, event, name in ((0.1, "finish", "polyfill_finish"), (0.5, "correct", "giggle"),
+                                   (0.5, "perfect", "swirls_rays"), (0.9, "correct", "realrainbow"),
+                                   (0.9, "finish", "harp"), (0.8, "finish", "bloom")):
+            await asyncio.sleep(delay)
+            sfx.play_clip(event, name)
+
     def _update_stats(self):
         self.score_t.value = str(self.score)
         self.miss_t.value = str(self.misses)
@@ -463,7 +570,14 @@ class Game:
     async def _round(self):
         done = self.score + self.misses
         if done >= self.count:
-            await self._done(None)
+            self.round_id += 1
+            self.accepting = False
+            perfect = self.score == self.count  # every problem solved, none timed out
+            if perfect:
+                await self._celebrate()
+            else:
+                self.sfx.play("finish")
+            self.show(self._build_summary(perfect))
             return
         self.progress_t.value = f"{done + 1}/{self.count}"
         self.round_id += 1

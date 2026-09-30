@@ -8,6 +8,9 @@ Timed addition game in [Flet](https://flet.dev) 1.0.
 - The answer buttons resize to fill the free space on any screen. Portrait only: native builds lock
   it; in the browser / home-screen app turn on the iPhone's Portrait Orientation Lock (Control Center).
 - "All done" ends the session and shows stats (solved, timeouts, times, streak, problems to practice).
+- All problems right: a confetti burst, a bouncing PERFECT! star and the long happy sounds layered
+  (the `perfect` set: superhero theme, Ride of the Valkyries), then a dare: "Nobody could do x numbers,
+  could they?" (x = the top of the range + 1); "I can!" starts a round with the higher range.
 - Sounds (toggle on the setup screen): a random pick per event from Tux Paint's sound effects,
   `src/assets/sounds/<event>_<name>.wav`, listed in `SOUNDS` in `src/main.py`. Drop in your own
   recordings with the same naming and add them to the list. In the web build the sounds play through
