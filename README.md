@@ -18,7 +18,7 @@ uv run flet run --web src/main.py    # browser
 ## iPhone
 
 Every push to `main` builds a static Pyodide web app (`flet publish`) and deploys it to GitHub Pages
-(`.github/workflows/pages.yml`). On the iPhone, open the Pages URL in Safari, then
+(`.github/workflows/pages.yml`). On the iPhone, open <https://vanegasdatasystems.github.io/fletMath/> in Safari, then
 Share -> Add to Home Screen: it launches full-screen like an app. First load downloads the
 Python runtime (~20 MB); later loads come from cache.
 
