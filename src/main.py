@@ -10,6 +10,11 @@ import time
 
 import flet as ft
 
+try:
+    from build_info import BUILD  # written by the Pages workflow
+except ImportError:
+    BUILD = "dev"
+
 SLIDE = ft.Animation(450, ft.AnimationCurve.EASE_OUT_BACK)
 POP = ft.Animation(250, ft.AnimationCurve.EASE_OUT_BACK)
 TICK = 0.05  # countdown refresh, seconds
@@ -115,6 +120,7 @@ class Game:
                     on_click=self._start,
                 ),
                 self.best_label,
+                ft.Text(f"build {BUILD}", size=11, color=ft.Colors.OUTLINE),
             ],
         )
         self._refresh_setup_labels()

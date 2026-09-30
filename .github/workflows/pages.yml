@@ -24,6 +24,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
       - run: uv sync
+      - name: Stamp build id
+        run: echo "BUILD = \"${GITHUB_SHA::7} $(date -u +%m-%d\ %H:%M)Z\"" > src/build_info.py
       - name: Publish static web app
         run: >
           uv run flet publish src/main.py
