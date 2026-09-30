@@ -67,6 +67,7 @@ SOUNDS = {
     "back": ["shrink", "zoom_down", "return"],
     "perfect": ["comic_dots", "swirls_rays"],  # all-correct celebration, played together
 }
+PHOTOS = [f"peace{i}.jpg" for i in range(1, 6)]  # double peace signs (Unsplash, see README), one at random
 CONFETTI = [ft.Colors.RED, ft.Colors.ORANGE, ft.Colors.AMBER, ft.Colors.GREEN, ft.Colors.BLUE,
             ft.Colors.PURPLE, ft.Colors.PINK, ft.Colors.CYAN]
 
@@ -170,17 +171,18 @@ class Game:
             for i, c in enumerate(THEMES)
         ]
         self.best_label = ft.Text(size=14, color=ft.Colors.ON_SURFACE_VARIANT)
+        self.photo = ft.Image(
+            src=random.choice(PHOTOS), width=150, height=100, fit=ft.BoxFit.COVER, border_radius=20,
+            semantics_label="Kids making peace signs",
+            error_content=ft.Icon(ft.Icons.CALCULATE_ROUNDED, size=56, color=ft.Colors.PRIMARY),
+        )
         self.setup_view = ft.Column(
             expand=True,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             alignment=ft.MainAxisAlignment.CENTER,
             spacing=12,
             controls=[
-                ft.Image(  # double peace sign: Unsplash photo, see README
-                    src="peace.jpg", width=150, height=100, fit=ft.BoxFit.COVER, border_radius=20,
-                    semantics_label="A child making peace signs with both hands",
-                    error_content=ft.Icon(ft.Icons.CALCULATE_ROUNDED, size=56, color=ft.Colors.PRIMARY),
-                ),
+                self.photo,
                 ft.Text(APP_NAME, size=34, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER),
                 ft.Container(height=12),
                 self.range_slider,
@@ -405,6 +407,7 @@ class Game:
         self.round_id += 1  # cancels any running countdown
         self.accepting = False
         self.sfx.play("back")
+        self.photo.src = random.choice([p for p in PHOTOS if p != self.photo.src])
         self._refresh_setup_labels()
         self.show(self.setup_view)
 
