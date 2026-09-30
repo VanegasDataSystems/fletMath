@@ -2,7 +2,7 @@
 
 Timed addition game in [Flet](https://flet.dev) 1.0.
 
-- Pick a number range (x to y), seconds per problem and how many problems (defaults: 0-4, 10 s, 5 problems), and a colour theme: orange, red, green or blue (default).
+- Pick a number range (x to y), seconds per problem and how many problems (defaults: 0-4, 10 s, 5 problems), and a colour theme: orange, red, green or blue (default). The opening screen cycles the themes every few seconds until Start or a colour is tapped.
 - Two numbers from the range slide in; then the countdown ring starts.
 - Tap the sum in the grid (every possible sum, 2x to 2y). Wrong taps shake and reset the streak; a timeout reveals the answer.
 - The answer buttons resize to fill the free space on any screen. Portrait only: native builds lock

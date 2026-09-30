@@ -24,6 +24,7 @@ GAP = 8  # grid spacing, px
 
 APP_NAME = "Mathy McMathFace"
 DEFAULTS = {"lo": 0, "hi": 4, "secs": 10, "count": 5, "theme": 3}
+CYCLE_SECS = 5  # opening screen: seconds per theme
 THEMES = [ft.Colors.ORANGE, ft.Colors.RED, ft.Colors.GREEN, ft.Colors.BLUE]  # pref "theme" = index
 RANGE_MIN, RANGE_MAX = 0, 20
 
@@ -126,6 +127,8 @@ class Game:
         self.lo, self.hi, self.secs, self.count = (DEFAULTS[k] for k in ("lo", "hi", "secs", "count"))
         self.best = 0
         self.round_id = 0
+        self.cycling = False
+        self.theme_i = DEFAULTS["theme"]
         self.accepting = False
         self.answer = 0
         self.t0 = 0.0
@@ -202,9 +205,20 @@ class Game:
         self.page.dark_theme = ft.Theme(color_scheme_seed=THEMES[i])
         for sw in self.swatches:  # ring the chosen colour
             sw.border = ft.Border.all(3, ft.Colors.ON_SURFACE) if sw.data == i else None
+        self.theme_i = i
         return i
 
+    async def _cycle_themes(self):
+        """Opening screen shows off the themes until Start or a colour tap; the saved choice is untouched."""
+        while self.cycling:
+            await asyncio.sleep(CYCLE_SECS)
+            if not self.cycling:
+                return
+            self._apply_theme((self.theme_i + 1) % len(THEMES))
+            self.page.update()
+
     async def _on_theme(self, e):
+        self.cycling = False
         i = self._apply_theme(e.control.data)
         self.page.update()
         await self.prefs.set_int("theme", i)
@@ -352,6 +366,8 @@ class Game:
         self.count_slider.value = self.count
         self._refresh_setup_labels()
         self.show(self.setup_view)
+        self.cycling = True
+        self.page.run_task(self._cycle_themes)
 
     def show(self, view):
         self.page.controls.clear()
@@ -360,6 +376,7 @@ class Game:
 
     async def _start(self, e):
         self.sfx.play("start")  # first thing, while iOS still counts the tap
+        self.cycling = False  # the game keeps the colour on screen
         self.lo, self.hi = int(self.range_slider.start_value), int(self.range_slider.end_value)
         self.secs = int(self.secs_slider.value)
         self.count = int(self.count_slider.value)
