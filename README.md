@@ -18,11 +18,12 @@ Timed addition game in [Flet](https://flet.dev) 1.0.
   `index.html` after `flet publish`); desktop runs use flet-audio. Tux Paint is GPL-2.0; per-file credits
   and licenses are in `src/assets/sounds/TUXPAINT_AUTHORS.txt`.
 - Range, time limit and best streak persist on the device.
-- Setup-screen photo: one of five double-peace-sign photos, `src/assets/peace1.jpg`..`peace5.jpg`, picked at
-  random on open and on each return to setup. Unsplash, under the [Unsplash License](https://unsplash.com/license)
-  (free use, no attribution required), cropped to 3:2: [1](https://unsplash.com/photos/iXakCfUG8do),
-  [2](https://unsplash.com/photos/o_xBvCuVoo8), [3](https://unsplash.com/photos/4enFxRUWXK8),
-  [4](https://unsplash.com/photos/gDQi4l7H7gA), [5](https://unsplash.com/photos/Mvivn0YyVxg).
+- Setup-screen photo: one of five peace-sign photos, `src/assets/peace1.jpg`..`peace5.jpg`, picked at random
+  on open and on each return to setup, cropped to 3:2. Free use, no attribution required: 1, 2, 4, 5 from Unsplash
+  ([license](https://unsplash.com/license)) - [1](https://unsplash.com/photos/iXakCfUG8do),
+  [2](https://unsplash.com/photos/o_xBvCuVoo8), [4](https://unsplash.com/photos/gDQi4l7H7gA),
+  [5](https://unsplash.com/photos/Mvivn0YyVxg); 3 from Pexels ([license](https://www.pexels.com/license/)) -
+  [3](https://www.pexels.com/photo/a-boy-doing-a-peace-sign-14622673/).
 
 ## Run locally
 
