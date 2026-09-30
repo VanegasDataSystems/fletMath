@@ -400,6 +400,7 @@ class Game:
         self.score = self.misses = self.streak = self.wrong = self.session_best = 0
         self.times: list[float] = []
         self.missed: list[str] = []
+        self.last_fact: set[int] = set()
         self.cells = {n: self._make_cell(n) for n in range(2 * self.lo, 2 * self.hi + 1)}
         self.grid.controls = list(self.cells.values())
         self._fit_grid()
@@ -590,7 +591,12 @@ class Game:
         self.round_id += 1
         rid = self.round_id
         self.accepting = False
-        a, b = random.randint(self.lo, self.hi), random.randint(self.lo, self.hi)
+        # never the same fact twice in a row; 3 + 4 and 4 + 3 count as the same fact
+        while True:
+            a, b = random.randint(self.lo, self.hi), random.randint(self.lo, self.hi)
+            if {a, b} != self.last_fact or self.lo == self.hi:
+                break
+        self.last_fact = {a, b}
         self.answer = a + b
         self.problem_text = f"{a} + {b}"
 
