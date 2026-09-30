@@ -13,6 +13,7 @@ uv run flet publish . \
   --app-name fletMath --app-short-name fletMath \
   --app-description "Timed addition game" \
   --pwa-theme-color "#3F51B5" --pwa-background-color "#121212"
+uv run python scripts/patch_web.py dist  # Web Audio sound engine (src/assets/sfx.js)
 
 # tailnet HTTPS -> local static server; persists across reboots until `tailscale serve reset`
 tailscale serve --bg "$PORT"

@@ -6,6 +6,7 @@ and the player taps the sum in a grid holding every possible sum (2*lo .. 2*hi).
 
 import asyncio
 import random
+import sys
 import time
 
 import flet as ft
@@ -64,13 +65,29 @@ SOUNDS = {
 
 
 class Sfx:
-    """Random pick per event, never the same clip twice in a row; audio errors never stop the game."""
+    """Random pick per event, never the same clip twice in a row; audio errors never stop the game.
+
+    Static web build (Pyodide in a worker): posts the clip name to assets/sfx.js over a BroadcastChannel,
+    which plays pre-decoded Web Audio buffers - flet-audio's <audio> element lags on iOS.
+    Desktop / server runs: flet-audio players.
+    """
 
     def __init__(self, page: ft.Page):
         self.page = page
         self.on = True
         self.last: dict[str, str] = {}
         self.players: dict[str, dict[str, fta.Audio]] = {}
+        self.channel = None
+        clips = [f"{event}_{n}" for event, names in SOUNDS.items() for n in names]
+        if sys.platform == "emscripten":
+            try:
+                import js  # ty: ignore[unresolved-import]  # Pyodide only
+
+                self.channel = js.BroadcastChannel.new("fletmath-sfx")
+                self.channel.postMessage("preload:" + ",".join(clips))
+                return
+            except Exception:
+                self.channel = None
         for event, names in SOUNDS.items():
             self.players[event] = {}
             for n in names:
@@ -84,6 +101,12 @@ class Sfx:
         names = SOUNDS[event]
         pick = random.choice([n for n in names if n != self.last.get(event)] or names)
         self.last[event] = pick
+        if self.channel is not None:
+            try:
+                self.channel.postMessage(f"play:{event}_{pick}")
+            except Exception:
+                pass
+            return
         self.page.run_task(self._play, self.players[event][pick])
 
     async def _play(self, audio):
@@ -522,36 +545,38 @@ class Game:
         c: ft.Container = e.control
         rid = self.round_id
         if c.data == self.answer:
+            self.sfx.play("correct")  # sound and colour first; bookkeeping after
             self.accepting = False
             dt = time.monotonic() - self.t0
             self.times.append(dt)
             self.score += 1
             self.streak += 1
             self.session_best = max(self.session_best, self.streak)
-            if self.streak > self.best:
+            new_best = self.streak > self.best
+            if new_best:
                 self.best = self.streak
-                await self.prefs.set_int("best", self.best)
             self._update_stats()
             c.bgcolor = ft.Colors.GREEN
             c.content.color = ft.Colors.WHITE
             c.scale = 1.3
-            self.sfx.play("correct")
             self.eq_t.value = f"= {self.answer}"
             self.eq_t.color = ft.Colors.GREEN
             avg = sum(self.times) / len(self.times)
             self.feedback.value = f"{dt:.2f}s  (avg {avg:.2f}s)"
             self.page.update()
+            if new_best:
+                await self.prefs.set_int("best", self.best)
             await asyncio.sleep(0.9)
             if rid == self.round_id:
                 self.page.run_task(self._round)
         else:
+            self.sfx.play("wrong")
             self.wrong += 1
             self.streak = 0
             self._update_stats()
             c.bgcolor = ft.Colors.RED
             c.content.color = ft.Colors.WHITE
             c.scale = 0.85
-            self.sfx.play("wrong")
             self.page.update()
             for dx in (0.04, -0.04, 0.03, -0.03, 0):  # shake the problem
                 self.problem.offset = ft.Offset(dx, 0)

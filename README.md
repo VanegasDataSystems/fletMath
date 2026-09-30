@@ -10,7 +10,9 @@ Timed addition game in [Flet](https://flet.dev) 1.0.
 - "All done" ends the session and shows stats (solved, timeouts, times, streak, problems to practice).
 - Sounds (toggle on the setup screen): a random pick per event from Tux Paint's sound effects,
   `src/assets/sounds/<event>_<name>.wav`, listed in `SOUNDS` in `src/main.py`. Drop in your own
-  recordings with the same naming and add them to the list. Tux Paint is GPL-2.0; per-file credits
+  recordings with the same naming and add them to the list. In the web build the sounds play through
+  `src/assets/sfx.js` (Web Audio, near-instant on iPhone; `scripts/patch_web.py` loads it into
+  `index.html` after `flet publish`); desktop runs use flet-audio. Tux Paint is GPL-2.0; per-file credits
   and licenses are in `src/assets/sounds/TUXPAINT_AUTHORS.txt`.
 - Range, time limit and best streak persist on the device.
 

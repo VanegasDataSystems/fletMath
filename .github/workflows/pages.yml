@@ -35,6 +35,8 @@ jobs:
           --app-name fletMath --app-short-name fletMath
           --app-description "Timed addition game"
           --pwa-theme-color "#3F51B5" --pwa-background-color "#121212"
+      - name: Load the Web Audio sound engine
+        run: uv run python scripts/patch_web.py dist
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
