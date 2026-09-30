@@ -24,7 +24,7 @@ TICK = 0.05  # countdown refresh, seconds
 GAP = 8  # grid spacing, px
 
 APP_NAME = "Give math a chance"
-DEFAULTS = {"lo": 0, "hi": 4, "secs": 10, "count": 5, "theme": 3}
+DEFAULTS = {"lo": 0, "hi": 2, "secs": 10, "count": 5, "theme": 3}
 CYCLE_SECS = 5  # opening screen: seconds per theme
 THEMES = [ft.Colors.RED, ft.Colors.ORANGE, ft.Colors.GREEN, ft.Colors.BLUE]  # pref "theme" = index
 RANGE_MIN, RANGE_MAX = 0, 20
@@ -369,8 +369,6 @@ class Game:
     # ---------- flow ----------
 
     async def load(self):
-        self.lo = await self.prefs.get_int("lo", DEFAULTS["lo"])
-        self.hi = await self.prefs.get_int("hi", DEFAULTS["hi"])
         self.secs = await self.prefs.get_int("secs", DEFAULTS["secs"])
         self.count = await self.prefs.get_int("count", DEFAULTS["count"])
         self.best = await self.prefs.get_int("best", 0)
@@ -395,7 +393,7 @@ class Game:
         self.lo, self.hi = int(self.range_slider.start_value), int(self.range_slider.end_value)
         self.secs = int(self.secs_slider.value)
         self.count = int(self.count_slider.value)
-        for k in ("lo", "hi", "secs", "count"):
+        for k in ("secs", "count"):  # the range is not saved: every open starts at the default
             await self.prefs.set_int(k, getattr(self, k))
         self.score = self.misses = self.streak = self.wrong = self.session_best = 0
         self.times: list[float] = []
@@ -490,7 +488,7 @@ class Game:
 
     async def _challenge(self, e):
         self.range_slider.end_value = min(self.hi + 1, RANGE_MAX)
-        await self._start(e)  # saves the new range with the other settings
+        await self._start(e)  # the higher range lasts until the app is closed
 
     async def _celebrate(self):
         """Every problem right: confetti burst from the middle, a star pops in, the happy sounds stack up."""
