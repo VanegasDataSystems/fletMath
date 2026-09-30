@@ -65,7 +65,11 @@ SOUNDS = {
     "timeout": ["areyousure", "drip", "tv", "rain", "crescent"],
     "finish": ["harp", "polyfill_finish", "comic_dots", "bloom"],
     "back": ["shrink", "zoom_down", "return"],
-    "perfect": ["comic_dots", "swirls_rays"],  # all-correct celebration, played together
+    # all-correct celebration: one long happy bed (superhero theme, Valkyries x2) + random cheers on top
+    "perfect": ["comic_dots", "swirls_rays", "swirls_circles"],
+    # Tux Paint "success" chime and bubbles; Kenney Music Jingles (CC0) picked for a rising, win-like shape
+    "cheer": ["polyfill_move", "foam", "hit11", "hit15", "nes12", "sax02", "pizzi02", "steel02",
+              "steel06", "pizzi12"],
 }
 PHOTOS = [f"peace{i}.jpg" for i in range(1, 6)]  # double peace signs (Unsplash, see README), one at random
 CONFETTI = [ft.Colors.RED, ft.Colors.ORANGE, ft.Colors.AMBER, ft.Colors.GREEN, ft.Colors.BLUE,
@@ -557,14 +561,13 @@ class Game:
         self.page.update()
 
     async def _celebration_sounds(self):
-        """Superhero theme and Valkyries underneath; the short happy ones on top."""
-        sfx = self.sfx
-        sfx.play_clip("perfect", "comic_dots")
-        for delay, event, name in ((0.1, "finish", "polyfill_finish"), (0.5, "correct", "giggle"),
-                                   (0.5, "perfect", "swirls_rays"), (0.9, "correct", "realrainbow"),
-                                   (0.9, "finish", "harp"), (0.8, "finish", "bloom")):
-            await asyncio.sleep(delay)
-            sfx.play_clip(event, name)
+        """A different mix every time: one long happy bed, then five random cheers stacked on top."""
+        self.sfx.play_clip("perfect", random.choice(SOUNDS["perfect"]))
+        happy = [(ev, n) for ev in ("cheer", "correct", "finish") for n in SOUNDS[ev]
+                 if (ev, n) != ("finish", "comic_dots")]  # the bed may already be the superhero theme
+        for event, name in random.sample(happy, 5):
+            await asyncio.sleep(random.uniform(0.3, 0.8))
+            self.sfx.play_clip(event, name)
 
     def _update_stats(self):
         self.score_t.value = str(self.score)

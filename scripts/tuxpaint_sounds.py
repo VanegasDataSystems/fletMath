@@ -11,8 +11,6 @@ from pathlib import Path
 import numpy as np
 import soundfile as sf
 
-TP = Path(sys.argv[1])  # .../jni/tuxpaint
-OUT = Path(sys.argv[2])  # fletMath/src/assets/sounds
 RATE = 22050
 
 # event -> [(source, max seconds)]
@@ -36,7 +34,9 @@ POOLS = {
                (f"{M}/comic_dots.ogg", 6), (f"{M}/bloom.ogg", 4)],
     "back": [(f"{D}/shrink.wav", 1.5), (f"{M}/zoom_down.ogg", 1.5), (f"{D}/return.wav", 1.5)],
     # all-correct celebration: the long happy ones (superhero theme; Ride of the Valkyries)
-    "perfect": [(f"{M}/comic_dots.ogg", 9), (f"{M}/swirls_rays.ogg", 3)],
+    "perfect": [(f"{M}/comic_dots.ogg", 9), (f"{M}/swirls_rays.ogg", 3), (f"{M}/swirls_circles.ogg", 4)],
+    # celebration toppings ("success" chime, bubbles); scripts/kenney_sounds.py adds jingles to this set
+    "cheer": [(f"{M}/polyfill_move.ogg", 2), (f"{M}/foam.ogg", 3)],
 }
 
 
@@ -57,19 +57,21 @@ def convert(src: Path, dst: Path, max_s: float):
 
 
 def main():
-    if OUT.exists():
-        shutil.rmtree(OUT)
-    OUT.mkdir(parents=True)
+    tp, out = Path(sys.argv[1]), Path(sys.argv[2])  # .../jni/tuxpaint, fletMath/src/assets/sounds
+    if out.exists():
+        shutil.rmtree(out)
+    out.mkdir(parents=True)
     total = 0
     for event, items in POOLS.items():
         for src, max_s in items:
             name = f"{event}_{Path(src).stem}.wav"
-            dur = convert(TP / src, OUT / name, max_s)
-            total += (OUT / name).stat().st_size
+            dur = convert(tp / src, out / name, max_s)
+            total += (out / name).stat().st_size
             print(f"{name} {dur:.1f}s")
     for doc in ("AUTHORS.txt", "COPYING.txt"):
-        shutil.copy(TP / "docs" / doc, OUT / f"TUXPAINT_{doc}")
+        shutil.copy(tp / "docs" / doc, out / f"TUXPAINT_{doc}")
     print(f"total {total / 1024:.0f} KB")
 
 
-main()
+if __name__ == "__main__":
+    main()
