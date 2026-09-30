@@ -478,6 +478,13 @@ async def main(page: ft.Page):
     page.theme = ft.Theme(color_scheme_seed=ft.Colors.INDIGO)
     page.dark_theme = ft.Theme(color_scheme_seed=ft.Colors.INDIGO)
     page.padding = 16
+    # portrait only, so thumbs reach the grid; native builds only - a browser
+    # (iOS Safari / home-screen app) cannot lock, use the phone's rotation lock there
+    if not page.web:
+        try:
+            await page.set_allowed_device_orientations([ft.DeviceOrientation.PORTRAIT_UP])
+        except Exception:
+            pass  # desktop
     game = Game(page)
     await game.load()
 
