@@ -31,7 +31,7 @@ jobs:
           --assets src/assets
           --base-url ${{ github.event.repository.name }}
           --route-url-strategy hash
-          --app-name fletAdd --app-short-name fletAdd
+          --app-name fletMath --app-short-name fletMath
           --app-description "Timed addition game"
           --pwa-theme-color "#3F51B5" --pwa-background-color "#121212"
       - uses: actions/upload-pages-artifact@v3

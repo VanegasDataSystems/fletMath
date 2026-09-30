@@ -1,4 +1,4 @@
-"""fletAdd - timed addition game.
+"""fletMath - timed addition game.
 
 Two addends are drawn from [lo, hi]; after they animate in, a countdown starts
 and the player taps the sum in a grid holding every possible sum (2*lo .. 2*hi).
@@ -28,14 +28,14 @@ class Prefs:
 
     async def get_int(self, key, default):
         try:
-            v = await self._sp.get(f"fletadd.{key}")
+            v = await self._sp.get(f"fletmath.{key}")
             return int(v) if v is not None else default
         except Exception:
             return default
 
     async def set_int(self, key, value):
         try:
-            await self._sp.set(f"fletadd.{key}", int(value))
+            await self._sp.set(f"fletmath.{key}", int(value))
         except Exception:
             pass
 
@@ -76,7 +76,7 @@ class Game:
             spacing=18,
             controls=[
                 ft.Icon(ft.Icons.CALCULATE_ROUNDED, size=72, color=ft.Colors.PRIMARY),
-                ft.Text("fletAdd", size=40, weight=ft.FontWeight.BOLD),
+                ft.Text("fletMath", size=40, weight=ft.FontWeight.BOLD),
                 ft.Container(height=12),
                 self.range_label,
                 self.range_slider,
@@ -344,7 +344,7 @@ class Game:
 
 
 async def main(page: ft.Page):
-    page.title = "fletAdd"
+    page.title = "fletMath"
     page.theme_mode = ft.ThemeMode.SYSTEM
     page.theme = ft.Theme(color_scheme_seed=ft.Colors.INDIGO)
     page.dark_theme = ft.Theme(color_scheme_seed=ft.Colors.INDIGO)
