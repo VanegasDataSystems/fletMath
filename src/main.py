@@ -175,7 +175,11 @@ class Game:
             alignment=ft.MainAxisAlignment.CENTER,
             spacing=12,
             controls=[
-                ft.Icon(ft.Icons.CALCULATE_ROUNDED, size=56, color=ft.Colors.PRIMARY),
+                ft.Image(  # two hands, ten fingers: Unsplash photo, see README
+                    src="hands.jpg", width=150, height=100, fit=ft.BoxFit.COVER, border_radius=20,
+                    semantics_label="Two hands with fingers spread",
+                    error_content=ft.Icon(ft.Icons.CALCULATE_ROUNDED, size=56, color=ft.Colors.PRIMARY),
+                ),
                 ft.Text(APP_NAME, size=34, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER),
                 ft.Container(height=12),
                 self.range_label,

@@ -15,6 +15,8 @@ Timed addition game in [Flet](https://flet.dev) 1.0.
   `index.html` after `flet publish`); desktop runs use flet-audio. Tux Paint is GPL-2.0; per-file credits
   and licenses are in `src/assets/sounds/TUXPAINT_AUTHORS.txt`.
 - Range, time limit and best streak persist on the device.
+- Setup-screen photo `src/assets/hands.jpg`: <https://unsplash.com/photos/person-showing-both-hands-GpLyNjjC5O4>,
+  under the [Unsplash License](https://unsplash.com/license) (free use, no attribution required).
 
 ## Run locally
 
