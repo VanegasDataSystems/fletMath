@@ -15,7 +15,8 @@ POP = ft.Animation(250, ft.AnimationCurve.EASE_OUT_BACK)
 TICK = 0.05  # countdown refresh, seconds
 GAP = 8  # grid spacing, px
 
-DEFAULTS = {"lo": 1, "hi": 10, "secs": 10}
+DEFAULTS = {"lo": 0, "hi": 10, "secs": 10}
+RANGE_MIN, RANGE_MAX = 0, 20
 
 
 class Prefs:
@@ -58,9 +59,25 @@ class Game:
     # ---------- setup screen ----------
 
     def _build_setup(self):
-        self.range_label = ft.Text(size=18, weight=ft.FontWeight.W_600)
+        self.lo_t = ft.Text(size=22, weight=ft.FontWeight.BOLD)
+        self.hi_t = ft.Text(size=22, weight=ft.FontWeight.BOLD)
+
+        def stepper(label, value_t, end):
+            return ft.Row(spacing=0, controls=[
+                ft.Text(label, size=16, color=ft.Colors.ON_SURFACE_VARIANT),
+                ft.IconButton(ft.Icons.REMOVE_CIRCLE_OUTLINE_ROUNDED, data=(end, -1),
+                              on_click=self._on_step),
+                value_t,
+                ft.IconButton(ft.Icons.ADD_CIRCLE_OUTLINE_ROUNDED, data=(end, 1),
+                              on_click=self._on_step),
+            ])
+
+        self.range_label = ft.Row(
+            alignment=ft.MainAxisAlignment.CENTER, spacing=16, wrap=True,
+            controls=[stepper("From", self.lo_t, "lo"), stepper("to", self.hi_t, "hi")],
+        )
         self.range_slider = ft.RangeSlider(
-            min=0, max=20, divisions=20,
+            min=RANGE_MIN, max=RANGE_MAX, divisions=RANGE_MAX - RANGE_MIN,
             start_value=self.lo, end_value=self.hi,
             on_change=self._on_setup_change,
         )
@@ -97,12 +114,25 @@ class Game:
 
     def _refresh_setup_labels(self):
         lo, hi = int(self.range_slider.start_value), int(self.range_slider.end_value)
-        self.range_label.value = f"Numbers {lo} to {hi}"
+        self.lo_t.value, self.hi_t.value = str(lo), str(hi)
         self.secs_label.value = f"{int(self.secs_slider.value)} seconds per problem"
         self.best_label.value = f"Best streak: {self.best}" if self.best else ""
 
     def _on_setup_change(self, e):
         self._refresh_setup_labels()
+
+    def _on_step(self, e):
+        """-/+ buttons: nudge one end of the range, keeping lo <= hi inside the slider."""
+        end, delta = e.control.data
+        s = self.range_slider
+        lo, hi = int(s.start_value), int(s.end_value)
+        if end == "lo":
+            lo = min(max(lo + delta, RANGE_MIN), hi)
+        else:
+            hi = max(min(hi + delta, RANGE_MAX), lo)
+        s.start_value, s.end_value = lo, hi
+        self._refresh_setup_labels()
+        self.page.update()
 
     # ---------- play screen ----------
 
