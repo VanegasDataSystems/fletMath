@@ -513,8 +513,9 @@ class Game:
             animate_scale=ft.Animation(900, ft.AnimationCurve.ELASTIC_OUT),
             animate_rotation=ft.Animation(900, ft.AnimationCurve.EASE_OUT_BACK),
         )
+        # blurs the game screen behind the confetti; fades in and out with its opacity
         shade = ft.Container(left=0, top=0, width=w, height=h, opacity=0, animate_opacity=400,
-                             bgcolor=ft.Colors.with_opacity(0.55, ft.Colors.BLACK))
+                             blur=ft.Blur(12, 12), bgcolor=ft.Colors.with_opacity(0.35, ft.Colors.BLACK))
         layer = ft.Stack(width=w, height=h, controls=[
             shade, *pieces,
             ft.Container(left=0, top=0, width=w, height=h, alignment=ft.Alignment.CENTER, content=star),
