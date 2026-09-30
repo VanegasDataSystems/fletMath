@@ -23,7 +23,8 @@ TICK = 0.05  # countdown refresh, seconds
 GAP = 8  # grid spacing, px
 
 APP_NAME = "Mathy McMathFace"
-DEFAULTS = {"lo": 0, "hi": 4, "secs": 4, "count": 4}
+DEFAULTS = {"lo": 0, "hi": 4, "secs": 10, "count": 4, "theme": 3}
+THEMES = [ft.Colors.ORANGE, ft.Colors.RED, ft.Colors.GREEN, ft.Colors.BLUE]  # pref "theme" = index
 RANGE_MIN, RANGE_MAX = 0, 20
 
 
@@ -168,6 +169,11 @@ class Game:
             on_change=self._on_setup_change,
         )
         self.sound_sw = ft.Switch(label="Sounds", value=True, on_change=self._on_sound)
+        self.swatches = [
+            ft.Container(width=34, height=34, border_radius=17, bgcolor=c, data=i,
+                         on_click=self._on_theme)
+            for i, c in enumerate(THEMES)
+        ]
         self.best_label = ft.Text(size=14, color=ft.Colors.ON_SURFACE_VARIANT)
         self.setup_view = ft.Column(
             expand=True,
@@ -195,7 +201,8 @@ class Game:
                     height=56, width=220,
                     on_click=self._start,
                 ),
-                self.sound_sw,
+                ft.Row(alignment=ft.MainAxisAlignment.CENTER, spacing=10,
+                       controls=[self.sound_sw, ft.Container(width=8), *self.swatches]),
                 self.best_label,
                 ft.Text(f"build {BUILD}", size=11, color=ft.Colors.OUTLINE),
             ],
@@ -208,6 +215,19 @@ class Game:
         self.secs_label.value = f"{int(self.secs_slider.value)} seconds per problem"
         self.count_label.value = f"{int(self.count_slider.value)} problems"
         self.best_label.value = f"Best streak: {self.best}" if self.best else ""
+
+    def _apply_theme(self, i):
+        i = i if 0 <= i < len(THEMES) else DEFAULTS["theme"]
+        self.page.theme = ft.Theme(color_scheme_seed=THEMES[i])
+        self.page.dark_theme = ft.Theme(color_scheme_seed=THEMES[i])
+        for sw in self.swatches:  # ring the chosen colour
+            sw.border = ft.Border.all(3, ft.Colors.ON_SURFACE) if sw.data == i else None
+        return i
+
+    async def _on_theme(self, e):
+        i = self._apply_theme(e.control.data)
+        self.page.update()
+        await self.prefs.set_int("theme", i)
 
     async def _on_sound(self, e):
         self.sfx.on = self.sound_sw.value
@@ -359,6 +379,7 @@ class Game:
         self.count = await self.prefs.get_int("count", DEFAULTS["count"])
         self.best = await self.prefs.get_int("best", 0)
         self.sfx.on = self.sound_sw.value = bool(await self.prefs.get_int("sound", 1))
+        self._apply_theme(await self.prefs.get_int("theme", DEFAULTS["theme"]))
         self.range_slider.start_value, self.range_slider.end_value = self.lo, self.hi
         self.secs_slider.value = self.secs
         self.count_slider.value = self.count
@@ -596,8 +617,6 @@ class Game:
 async def main(page: ft.Page):
     page.title = APP_NAME
     page.theme_mode = ft.ThemeMode.SYSTEM
-    page.theme = ft.Theme(color_scheme_seed=ft.Colors.INDIGO)
-    page.dark_theme = ft.Theme(color_scheme_seed=ft.Colors.INDIGO)
     page.padding = 16
     # portrait only, so thumbs reach the grid; native builds only - a browser
     # (iOS Safari / home-screen app) cannot lock, use the phone's rotation lock there
