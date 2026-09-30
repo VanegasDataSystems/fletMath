@@ -25,7 +25,7 @@ GAP = 8  # grid spacing, px
 APP_NAME = "Mathy McMathFace"
 DEFAULTS = {"lo": 0, "hi": 4, "secs": 10, "count": 5, "theme": 3}
 CYCLE_SECS = 5  # opening screen: seconds per theme
-THEMES = [ft.Colors.ORANGE, ft.Colors.RED, ft.Colors.GREEN, ft.Colors.BLUE]  # pref "theme" = index
+THEMES = [ft.Colors.RED, ft.Colors.ORANGE, ft.Colors.GREEN, ft.Colors.BLUE]  # pref "theme" = index
 RANGE_MIN, RANGE_MAX = 0, 20
 
 
