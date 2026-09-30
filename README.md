@@ -5,6 +5,8 @@ Timed addition game in [Flet](https://flet.dev) 1.0.
 - Pick a number range (x to y) and seconds per problem.
 - Two numbers from the range slide in; then the countdown ring starts.
 - Tap the sum in the grid (every possible sum, 2x to 2y). Wrong taps shake and reset the streak; a timeout reveals the answer.
+- The answer buttons resize to fill the free space on any screen.
+- "All done" ends the session and shows stats (solved, timeouts, times, streak, problems to practice).
 - Range, time limit and best streak persist on the device.
 
 ## Run locally

@@ -13,6 +13,7 @@ import flet as ft
 SLIDE = ft.Animation(450, ft.AnimationCurve.EASE_OUT_BACK)
 POP = ft.Animation(250, ft.AnimationCurve.EASE_OUT_BACK)
 TICK = 0.05  # countdown refresh, seconds
+GAP = 8  # grid spacing, px
 
 DEFAULTS = {"lo": 1, "hi": 10, "secs": 10}
 
@@ -157,13 +158,50 @@ class Game:
             ],
         )
 
-        self.grid = ft.GridView(expand=True, max_extent=68, spacing=8, run_spacing=8,
-                                child_aspect_ratio=1, build_controls_on_demand=False)
+        # runs_count / aspect ratio are recomputed in _fit_grid to fill the free space
+        self.grid_w = self.grid_h = 0.0
+        self.grid = ft.GridView(expand=True, runs_count=5, spacing=GAP, run_spacing=GAP,
+                                child_aspect_ratio=1, build_controls_on_demand=False,
+                                on_size_change=self._on_grid_size)
+        done = ft.OutlinedButton(
+            content=ft.Text("All done", size=18),
+            icon=ft.Icons.FLAG_ROUNDED,
+            height=52,
+            on_click=self._done,
+        )
         self.play_view = ft.Column(
             expand=True, spacing=10,
             horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
-            controls=[top, ft.Container(height=8), self.problem, timer, self.grid],
+            controls=[top, ft.Container(height=8), self.problem, timer, self.grid,
+                      ft.Container(height=4), done],
         )
+
+    def _on_grid_size(self, e: ft.LayoutSizeChangeEvent):
+        if (e.width, e.height) == (self.grid_w, self.grid_h):
+            return
+        self.grid_w, self.grid_h = e.width, e.height
+        self._fit_grid()
+        self.page.update()
+
+    def _fit_grid(self):
+        """Pick the column count that gives the biggest square, then stretch cells to fill."""
+        n, w, h = len(self.cells), self.grid_w, self.grid_h
+        if not n or w <= 0 or h <= 0:
+            return
+        best_side, cols = 0.0, 1
+        for c in range(1, n + 1):
+            rows = -(-n // c)
+            side = min((w - GAP * (c - 1)) / c, (h - GAP * (rows - 1)) / rows)
+            if side > best_side:
+                best_side, cols = side, c
+        rows = -(-n // cols)
+        cw = (w - GAP * (cols - 1)) / cols
+        ch = (h - GAP * (rows - 1)) / rows - 1  # 1px slack so rounding never scrolls
+        self.grid.runs_count = cols
+        self.grid.child_aspect_ratio = cw / ch
+        size = max(18, min(cw / 1.6, ch * 0.5))
+        for cell in self.cells.values():
+            cell.content.size = size
 
     def _make_cell(self, n):
         return ft.Container(
@@ -205,10 +243,12 @@ class Game:
         self.secs = int(self.secs_slider.value)
         for k in ("lo", "hi", "secs"):
             await self.prefs.set_int(k, getattr(self, k))
-        self.score = self.misses = self.streak = 0
+        self.score = self.misses = self.streak = self.wrong = self.session_best = 0
         self.times: list[float] = []
+        self.missed: list[str] = []
         self.cells = {n: self._make_cell(n) for n in range(2 * self.lo, 2 * self.hi + 1)}
         self.grid.controls = list(self.cells.values())
+        self._fit_grid()
         self._update_stats()
         self.show(self.play_view)
         self.page.run_task(self._round)
@@ -218,6 +258,61 @@ class Game:
         self.accepting = False
         self._refresh_setup_labels()
         self.show(self.setup_view)
+
+    async def _done(self, e):
+        self.round_id += 1  # the unfinished problem is not counted
+        self.accepting = False
+        self.show(self._build_summary())
+
+    def _build_summary(self):
+        total = self.score + self.misses
+        avg = f"{sum(self.times) / len(self.times):.1f}s" if self.times else "-"
+        fast = f"{min(self.times):.1f}s" if self.times else "-"
+
+        def tile(value, label, icon, color):
+            return ft.Container(
+                col=6, padding=12, border_radius=16,
+                bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
+                content=ft.Column(
+                    spacing=2, horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    controls=[
+                        ft.Icon(icon, color=color),
+                        ft.Text(value, size=30, weight=ft.FontWeight.BOLD),
+                        ft.Text(label, size=14, color=ft.Colors.ON_SURFACE_VARIANT),
+                    ],
+                ),
+            )
+
+        tiles = ft.ResponsiveRow(spacing=12, run_spacing=12, controls=[
+            tile(f"{self.score}/{total}", "solved", ft.Icons.CHECK_CIRCLE_ROUNDED, ft.Colors.GREEN),
+            tile(str(self.misses), "timed out", ft.Icons.HOURGLASS_BOTTOM_ROUNDED, ft.Colors.AMBER),
+            tile(avg, "average", ft.Icons.TIMER_ROUNDED, ft.Colors.PRIMARY),
+            tile(fast, "fastest", ft.Icons.BOLT_ROUNDED, ft.Colors.PRIMARY),
+            tile(str(self.session_best), "best streak",
+                 ft.Icons.LOCAL_FIRE_DEPARTMENT_ROUNDED, ft.Colors.ORANGE),
+            tile(str(self.wrong), "wrong taps", ft.Icons.CANCEL_ROUNDED, ft.Colors.RED),
+        ])
+        practice = list(dict.fromkeys(self.missed))[:8]
+        return ft.Column(
+            expand=True, spacing=16, scroll=ft.ScrollMode.AUTO,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                ft.Container(height=8),
+                ft.Icon(ft.Icons.EMOJI_EVENTS_ROUNDED, size=64, color=ft.Colors.AMBER),
+                ft.Text("All done!", size=36, weight=ft.FontWeight.BOLD),
+                tiles,
+                ft.Text("Practice: " + ",  ".join(practice), size=16,
+                        text_align=ft.TextAlign.CENTER) if practice else ft.Container(),
+                ft.Container(height=8),
+                ft.FilledButton(
+                    content=ft.Text("Play again", size=20),
+                    icon=ft.Icons.REPLAY_ROUNDED,
+                    height=56, width=240,
+                    on_click=self._start,
+                ),
+                ft.TextButton(content=ft.Text("Settings", size=16), on_click=self._stop),
+            ],
+        )
 
     def _update_stats(self):
         self.score_t.value = str(self.score)
@@ -230,6 +325,7 @@ class Game:
         self.accepting = False
         a, b = random.randint(self.lo, self.hi), random.randint(self.lo, self.hi)
         self.answer = a + b
+        self.problem_text = f"{a} + {b}"
 
         # exit: old numbers fly off to the right
         for box in (self.a_box, self.b_box):
@@ -284,6 +380,7 @@ class Game:
     async def _timeout(self, rid):
         self.accepting = False
         self.misses += 1
+        self.missed.append(self.problem_text)
         self.streak = 0
         self._update_stats()
         self.ring.value = 0
@@ -311,6 +408,7 @@ class Game:
             self.times.append(dt)
             self.score += 1
             self.streak += 1
+            self.session_best = max(self.session_best, self.streak)
             if self.streak > self.best:
                 self.best = self.streak
                 await self.prefs.set_int("best", self.best)
@@ -327,6 +425,7 @@ class Game:
             if rid == self.round_id:
                 self.page.run_task(self._round)
         else:
+            self.wrong += 1
             self.streak = 0
             self._update_stats()
             c.bgcolor = ft.Colors.RED
