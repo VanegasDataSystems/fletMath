@@ -1,8 +1,8 @@
-# fletMath
+# Mathy McMathFace (fletMath)
 
 Timed addition game in [Flet](https://flet.dev) 1.0.
 
-- Pick a number range (x to y), seconds per problem and how many problems (default 10).
+- Pick a number range (x to y), seconds per problem and how many problems (defaults: 0-4, 4 s, 4 problems).
 - Two numbers from the range slide in; then the countdown ring starts.
 - Tap the sum in the grid (every possible sum, 2x to 2y). Wrong taps shake and reset the streak; a timeout reveals the answer.
 - The answer buttons resize to fill the free space on any screen. Portrait only: native builds lock

@@ -1,4 +1,4 @@
-"""fletMath - timed addition game.
+"""Mathy McMathFace (repo: fletMath) - timed addition game.
 
 Two addends are drawn from [lo, hi]; after they animate in, a countdown starts
 and the player taps the sum in a grid holding every possible sum (2*lo .. 2*hi).
@@ -22,7 +22,8 @@ POP = ft.Animation(250, ft.AnimationCurve.EASE_OUT_BACK)
 TICK = 0.05  # countdown refresh, seconds
 GAP = 8  # grid spacing, px
 
-DEFAULTS = {"lo": 0, "hi": 10, "secs": 10, "count": 10}
+APP_NAME = "Mathy McMathFace"
+DEFAULTS = {"lo": 0, "hi": 4, "secs": 4, "count": 4}
 RANGE_MIN, RANGE_MAX = 0, 20
 
 
@@ -163,7 +164,7 @@ class Game:
         )
         self.count_label = ft.Text(size=18, weight=ft.FontWeight.W_600)
         self.count_slider = ft.Slider(
-            min=5, max=50, divisions=9, value=self.count,
+            min=1, max=30, divisions=29, value=self.count,
             on_change=self._on_setup_change,
         )
         self.sound_sw = ft.Switch(label="Sounds", value=True, on_change=self._on_sound)
@@ -175,7 +176,7 @@ class Game:
             spacing=12,
             controls=[
                 ft.Icon(ft.Icons.CALCULATE_ROUNDED, size=56, color=ft.Colors.PRIMARY),
-                ft.Text("fletMath", size=40, weight=ft.FontWeight.BOLD),
+                ft.Text(APP_NAME, size=34, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER),
                 ft.Container(height=12),
                 self.range_label,
                 self.range_slider,
@@ -589,7 +590,7 @@ class Game:
 
 
 async def main(page: ft.Page):
-    page.title = "fletMath"
+    page.title = APP_NAME
     page.theme_mode = ft.ThemeMode.SYSTEM
     page.theme = ft.Theme(color_scheme_seed=ft.Colors.INDIGO)
     page.dark_theme = ft.Theme(color_scheme_seed=ft.Colors.INDIGO)
