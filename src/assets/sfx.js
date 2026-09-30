@@ -6,8 +6,8 @@
   const AC = window.AudioContext || window.webkitAudioContext;
   if (!AC || !window.BroadcastChannel) return;
   const ctx = new AC({ latencyHint: "interactive" });
-  // play through the silent switch like the <audio> element did; the in-app Sounds switch is the mute
-  try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) {}
+  // "ambient": the iPhone's silent switch mutes the game, and a kid's music or podcast keeps playing
+  try { if (navigator.audioSession) navigator.audioSession.type = "ambient"; } catch (e) {}
 
   const buffers = new Map();
   const loading = new Map();
