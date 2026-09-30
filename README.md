@@ -1,4 +1,4 @@
-# Mathy McMathFace (fletMath)
+# Give math a chance (fletMath)
 
 Timed addition game in [Flet](https://flet.dev) 1.0.
 

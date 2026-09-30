@@ -13,7 +13,7 @@ dev = [
 ]
 
 [tool.flet]
-product = "Mathy McMathFace"
+product = "Give math a chance"
 company = "VanegasDataSystems"
 org = "com.vanegasdatasystems"
 

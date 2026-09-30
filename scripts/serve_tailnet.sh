@@ -10,7 +10,7 @@ uv sync
 uv run flet publish . \
   --distpath "$PWD/dist" \
   --route-url-strategy hash \
-  --app-name "Mathy McMathFace" --app-short-name Mathy \
+  --app-name "Give math a chance" --app-short-name Mathy \
   --app-description "Timed addition game" \
   --pwa-theme-color "#3F51B5" --pwa-background-color "#121212"
 uv run python scripts/patch_web.py dist  # Web Audio sound engine (src/assets/sfx.js)

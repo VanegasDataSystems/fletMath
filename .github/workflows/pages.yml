@@ -32,7 +32,7 @@ jobs:
           --distpath "$GITHUB_WORKSPACE/dist"
           --base-url ${{ github.event.repository.name }}
           --route-url-strategy hash
-          --app-name "Mathy McMathFace" --app-short-name Mathy
+          --app-name "Give math a chance" --app-short-name Mathy
           --app-description "Timed addition game"
           --pwa-theme-color "#3F51B5" --pwa-background-color "#121212"
       - name: Load the Web Audio sound engine

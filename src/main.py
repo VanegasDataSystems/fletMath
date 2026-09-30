@@ -1,4 +1,4 @@
-"""Mathy McMathFace (repo: fletMath) - timed addition game.
+"""Give math a chance (repo: fletMath) - timed addition game.
 
 Two addends are drawn from [lo, hi]; after they animate in, a countdown starts
 and the player taps the sum in a grid holding every possible sum (2*lo .. 2*hi).
@@ -23,7 +23,7 @@ POP = ft.Animation(250, ft.AnimationCurve.EASE_OUT_BACK)
 TICK = 0.05  # countdown refresh, seconds
 GAP = 8  # grid spacing, px
 
-APP_NAME = "Mathy McMathFace"
+APP_NAME = "Give math a chance"
 DEFAULTS = {"lo": 0, "hi": 4, "secs": 10, "count": 5, "theme": 3}
 CYCLE_SECS = 5  # opening screen: seconds per theme
 THEMES = [ft.Colors.RED, ft.Colors.ORANGE, ft.Colors.GREEN, ft.Colors.BLUE]  # pref "theme" = index
