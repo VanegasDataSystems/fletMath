@@ -15,11 +15,22 @@ uv run flet run src/main.py          # desktop window
 uv run flet run --web src/main.py    # browser
 ```
 
-## iPhone
+## iPhone (self-hosted on the tailnet, no Apple account)
 
-Every push to `main` builds a static Pyodide web app (`flet publish`) and deploys it to GitHub Pages
-(`.github/workflows/pages.yml`). On the iPhone, open <https://vanegasdatasystems.github.io/fletMath/> in Safari, then
-Share -> Add to Home Screen: it launches full-screen like an app. First load downloads the
-Python runtime (~20 MB); later loads come from cache.
+On the Mac mini (Tailscale logged in; MagicDNS + HTTPS certificates on in the admin console):
 
-A native `.ipa` (`flet build ipa`) needs macOS, Xcode and an Apple developer account.
+```
+./scripts/serve_tailnet.sh
+```
+
+It builds the static Pyodide web app (`flet publish`), serves it locally on port 8550 and puts it
+behind `tailscale serve` at `https://<mac-mini>.<tailnet>.ts.net/`. On the iPhone (Tailscale app
+connected) open that URL in Safari, then Share -> Add to Home Screen: it launches full-screen like an
+app. Python runs on the phone; the Mac only serves files. The first load pulls the Python runtime
+(~20 MB); later loads come from cache.
+
+GitHub Pages also deploys every push to `main` (`.github/workflows/pages.yml`):
+<https://vanegasdatasystems.github.io/fletMath/>.
+
+A native `.ipa` (`flet build ipa`) needs Xcode and an Apple ID; sideloads with a free ID expire
+after 7 days.
